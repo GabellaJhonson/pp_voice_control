@@ -4,6 +4,8 @@ import speech_recognition as sr
 import pyautogui
 import time
 
+import read_csv
+
 def record_text():
     recognizer = sr.Recognizer()
     microphone = sr.Microphone()
@@ -35,17 +37,29 @@ def open_powerpoint_presentation(file_path):
     # Start slideshow
     presentation.SlideShowSettings.Run()
 
-    while True:
-        command = record_text()
-        print(f"Распознана команда: {command}")
+    # Read Activation words
 
-        if command == "назад":
+    commands_dict = read_csv.csv_to_hashmap()
+    while True:
+        command_txt = record_text()
+        command = ""
+        print(f"Распознана команда: {command_txt}")
+        if commands_dict.get(command_txt.split()[-1]):
+            command = str (commands_dict.get(command_txt.split()[-1])[0])
+
+
+        if command == "previous":
             pyautogui.hotkey('left')
-        elif command == "вперёд":
+        elif command == "next":
             pyautogui.hotkey('right')
-        elif command.startswith("перейти к слайду"):
+        elif command.startswith("to") and command.endswith("slide"):
+            command_txt = "перейти к слайду " + command.split()[1]
+        elif command == "exit":
+            powerpoint.Quit()
+            break
+        if command_txt.startswith("перейти к слайду"):
             try:
-                slide_number = int(command.split()[3])
+                slide_number = int(command_txt.split()[-1])
                 if 1 <= slide_number <= slides_count:
                     presentation.SlideShowWindow.View.GotoSlide(slide_number)
                     print(f"Переход к слайду {slide_number}")
@@ -55,14 +69,11 @@ def open_powerpoint_presentation(file_path):
                 print("Не указан номер слайда")
             except ValueError:
                 print("Неверный номер слайда")
-        elif command == "exit":
-            powerpoint.Quit()
-            break
         else:
             print("Неверная команда")
 
         # Give some time for PowerPoint to process the commands
-        time.sleep(0.5)
+        time.sleep(0.2)
 
 if __name__ == "__main__":
     file_path = input("Введите полный путь к презентации PowerPoint: ")
