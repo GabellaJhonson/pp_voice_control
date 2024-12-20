@@ -52,7 +52,7 @@ def open_powerpoint_presentation(file_path):
             pyautogui.hotkey('left')
         elif command == "next":
             pyautogui.hotkey('right')
-        elif command.startswith("to") and command.endswith("slide"):
+        elif command.startswith("slide"):
             command_txt = "перейти к слайду " + command.split()[1]
         elif command == "exit":
             powerpoint.Quit()

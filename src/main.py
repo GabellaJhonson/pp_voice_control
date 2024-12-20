@@ -1,11 +1,13 @@
 import sys
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, 
-    QFileDialog, QMessageBox, QTableWidget, QTableWidgetItem, QHBoxLayout
+    QFileDialog, QMessageBox, QTableWidget, QTableWidgetItem, QHBoxLayout, QComboBox
 )
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 import os
 import voice_navigator as voice_navigator
+import read_csv
 
 class FirstWindow(QWidget):
     def __init__(self):
@@ -73,22 +75,19 @@ class SecondWindow(QWidget):
         super().__init__()
 
         self.parent_window = parent_window
+        self.words = read_csv.csv_to_hashmap()  # Сохраняем словарь
         self.setWindowTitle("Настройка управления презентацией")
         self.layout = QVBoxLayout()
 
-        self.label1 = QLabel("Следующий слайд")
-        self.layout.addWidget(self.label1)
+        self.label = QLabel("Текущие команды")
+        self.layout.addWidget(self.label)
 
-        self.next_table = QTableWidget(0, 1)
-        self.next_table.setHorizontalHeaderLabels(["Слова активации"])
-        self.layout.addWidget(self.next_table)
+        self.table = QTableWidget(0, 2)
+        self.table.setHorizontalHeaderLabels(["Command", "Слова активации"])
+        self.layout.addWidget(self.table)
 
-        self.label2 = QLabel("Предыдущий слайд")
-        self.layout.addWidget(self.label2)
-
-        self.previous_table = QTableWidget(0, 1)
-        self.previous_table.setHorizontalHeaderLabels(["Слова активации"])
-        self.layout.addWidget(self.previous_table)
+        # Предзаполняем таблицу из словаря
+        self.populate_table()
 
         self.add_row_buttons()
 
@@ -98,27 +97,63 @@ class SecondWindow(QWidget):
 
         self.setLayout(self.layout)
 
+    def populate_table(self):
+        """Предзаполняет таблицу из словаря."""
+        for key, value in self.words.items():
+            self.add_row_to_table(value[0], key)
+
     def add_row_buttons(self):
+        """Добавляет кнопки для управления строками."""
         row_buttons_layout = QHBoxLayout()
 
-        self.add_next_row_button = QPushButton("Добавить в Следующий")
-        self.add_next_row_button.clicked.connect(lambda: self.add_row(self.next_table))
-        row_buttons_layout.addWidget(self.add_next_row_button)
+        # Кнопка добавления строки
+        self.add_row_button = QPushButton()
+        self.add_row_button.setIcon(QIcon("resource\plus_icon.png"))  # Укажите путь к иконке
+        self.add_row_button.setFixedSize(30, 30)  # Маленький размер кнопки
+        self.add_row_button.clicked.connect(lambda: self.add_row(self.table))
+        row_buttons_layout.addWidget(self.add_row_button)
 
-        self.add_previous_row_button = QPushButton("Добавить в Предыдущий")
-        self.add_previous_row_button.clicked.connect(lambda: self.add_row(self.previous_table))
-        row_buttons_layout.addWidget(self.add_previous_row_button)
+        # Кнопка удаления строки
+        self.delete_row_button = QPushButton()
+        self.delete_row_button.setIcon(QIcon("resource\minus_icon.png"))  # Укажите путь к иконке
+        self.delete_row_button.setFixedSize(30, 30)  # Маленький размер кнопки
+        self.delete_row_button.clicked.connect(lambda: self.delete_row(self.table))
+        row_buttons_layout.addWidget(self.delete_row_button)
 
         self.layout.addLayout(row_buttons_layout)
 
+    def add_row_to_table(self, command="", activation=""):
+        """Добавляет строку в таблицу с выпадающим списком и текстовым полем."""
+        row_position = self.table.rowCount()
+        self.table.insertRow(row_position)
+
+        # Выпадающий список для первого столбца
+        combo_box = QComboBox()
+        options = ["next", "previous", "exit", "slide 1", "slide 2", "slide 3", "slide 4", "slide 5"]
+        combo_box.addItems(options)  # Замените на ваши значения
+        if command in options:
+            combo_box.setCurrentText(command)
+        self.table.setCellWidget(row_position, 0, combo_box)
+
+        # Редактируемая ячейка для второго столбца
+        activation_item = QTableWidgetItem(activation)
+        self.table.setItem(row_position, 1, activation_item)
+
     def add_row(self, table):
-        row_position = table.rowCount()
-        table.insertRow(row_position)
-        table.setItem(row_position, 0, QTableWidgetItem(""))
+        """Добавляет новую строку в таблицу."""
+        self.add_row_to_table()  # Пустая строка по умолчанию
+
+    def delete_row(self, table):
+        """Удаляет выделенную строку из таблицы."""
+        selected_row = table.currentRow()
+        if selected_row != -1:  # Проверка, что строка выделена
+            table.removeRow(selected_row)
 
     def run_action(self):
+        """Возвращает к родительскому окну."""
         self.parent_window.show()
         self.close()
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
