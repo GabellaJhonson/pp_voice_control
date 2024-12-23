@@ -175,10 +175,3 @@ if __name__ == "__main__":
     main_window = MainWindow()
     main_window.show()
     sys.exit(app.exec_())
-# next;вперёд
-# next;следующий
-# previous;назад
-# previous;предыдущий
-# slide 3;цветы
-# slide 1;начало
-# exit;закрыть
