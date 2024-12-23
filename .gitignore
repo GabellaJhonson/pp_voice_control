@@ -57,6 +57,3 @@ htmlcov/
 *.log
 *.sqlite3
 *.pptx
-
-# Images
-*.png
